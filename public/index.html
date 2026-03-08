@@ -327,6 +327,22 @@
         .clear-btn:hover {
             background: #5a6268;
         }
+
+        .reset-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: background 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #138496;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +375,9 @@
             <div class="result-title" id="resultTitle"></div>
             <div class="result-list" id="resultList"></div>
             <div id="resultActions"></div>
+            <div id="resultReset" style="text-align: center; display: none;">
+                <button class="reset-btn" id="resetBtn">重新开始</button>
+            </div>
         </div>
 
         <div class="footer">
@@ -380,6 +399,8 @@
         const resultTitle = document.getElementById('resultTitle');
         const resultList = document.getElementById('resultList');
         const resultActions = document.getElementById('resultActions');
+        const resultReset = document.getElementById('resultReset');
+        const resetBtn = document.getElementById('resetBtn');
 
         let selectedFiles = [];
         let convertedFiles = [];
@@ -567,6 +588,9 @@
                 resultActions.innerHTML = '';
             }
 
+            resultReset.style.display = 'block';
+            resetBtn.addEventListener('click', resetAll);
+
             selectedFiles = [];
             updateFileList();
         }
@@ -605,11 +629,20 @@
             }
         }
 
+        function resetAll() {
+            result.classList.remove('show');
+            resultReset.style.display = 'none';
+            convertedFiles = [];
+            selectedFiles = [];
+            updateFileList();
+        }
+
         function showResult(type, message) {
             result.className = 'result show ' + type;
             resultTitle.textContent = (type === 'success' ? '✅ ' : '❌ ') + message;
             resultList.innerHTML = '';
             resultActions.innerHTML = '';
+            resultReset.style.display = 'none';
         }
     </script>
 </body>

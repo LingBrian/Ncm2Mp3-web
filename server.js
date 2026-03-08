@@ -24,14 +24,16 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    cb(null, uniqueSuffix + '-' + originalname);
   }
 });
 
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
-    if (path.extname(file.originalname).toLowerCase() === '.ncm') {
+    const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    if (path.extname(originalname).toLowerCase() === '.ncm') {
       cb(null, true);
     } else {
       cb(new Error('只支持 NCM 文件'));
@@ -52,19 +54,21 @@ app.post('/convert', upload.array('ncmFiles', 20), async (req, res) => {
 
     for (const file of req.files) {
       try {
-        console.log('正在转换:', file.originalname);
+        const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        console.log('正在转换:', originalname);
         const resultPath = await convertNcm(file.path, outputDir + '/');
         fs.unlinkSync(file.path);
 
         results.push({
-          originalName: file.originalname,
+          originalName: originalname,
           filename: path.basename(resultPath),
           downloadUrl: '/download/' + path.basename(resultPath)
         });
       } catch (error) {
-        console.error(`转换失败 ${file.originalname}:`, error);
+        const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        console.error(`转换失败 ${originalname}:`, error);
         errors.push({
-          originalName: file.originalname,
+          originalName: originalname,
           error: error.message
         });
         if (fs.existsSync(file.path)) {

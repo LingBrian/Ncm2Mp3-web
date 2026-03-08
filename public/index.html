@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCM 转 MP3 在线转换器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 12px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f0f2ff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: #e8ebff;
+        }
+
+        .file-item-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .file-item-info {
+            flex: 1;
+        }
+
+        .file-item-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .file-item-size {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .file-item-remove {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .file-item-remove:hover {
+            background: #ff3838;
+        }
+
+        .file-count {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .convert-btn, .download-all-btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .convert-btn.show, .download-all-btn.show {
+            display: block;
+        }
+
+        .convert-btn:hover, .download-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-btn:disabled, .download-all-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .download-all-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .progress {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result.success .result-title {
+            color: #155724;
+        }
+
+        .result.error .result-title {
+            color: #721c24;
+        }
+
+        .result-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .result-item.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .result-item.error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .result-item-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .result-item-info {
+            flex: 1;
+        }
+
+        .result-item-name {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .result-item-error {
+            font-size: 12px;
+            color: #dc3545;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NCM 转 MP3</h1>
+        <p class="subtitle">网易云音乐格式在线转换工具 - 支持批量转换</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">点击或拖拽上传 NCM 文件</div>
+            <div class="upload-hint">支持多选，一次最多 20 个文件</div>
+        </div>
+
+        <input type="file" id="fileInput" accept=".ncm" multiple>
+
+        <div class="file-list" id="fileList"></div>
+        <div class="file-count" id="fileCount"></div>
+
+        <button class="convert-btn" id="convertBtn">开始转换</button>
+        <button class="clear-btn" id="clearBtn" style="display: none;">清空列表</button>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">正在上传...</div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-list" id="resultList"></div>
+            <div id="resultActions"></div>
+        </div>
+
+        <div class="footer">
+            文件仅在服务器临时存储，转换后自动删除
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileCount = document.getElementById('fileCount');
+        const convertBtn = document.getElementById('convertBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const result = document.getElementById('result');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultList = document.getElementById('resultList');
+        const resultActions = document.getElementById('resultActions');
+
+        let selectedFiles = [];
+        let convertedFiles = [];
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.ncm'));
+            if (files.length > 0) {
+                addFiles(files);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                addFiles(Array.from(e.target.files));
+                fileInput.value = '';
+            }
+        });
+
+        function addFiles(files) {
+            const ncmFiles = files.filter(f => f.name.endsWith('.ncm'));
+            if (ncmFiles.length === 0) {
+                showResult('error', '请选择 NCM 格式的文件');
+                return;
+            }
+
+            if (selectedFiles.length + ncmFiles.length > 20) {
+                showResult('error', '一次最多只能转换 20 个文件');
+                return;
+            }
+
+            selectedFiles = [...selectedFiles, ...ncmFiles];
+            updateFileList();
+            result.classList.remove('show');
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div class="file-item-icon">🎵</div>
+                    <div class="file-item-info">
+                        <div class="file-item-name">${file.name}</div>
+                        <div class="file-item-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="file-item-remove" data-index="${index}">删除</button>
+                `;
+                fileList.appendChild(item);
+            });
+
+            document.querySelectorAll('.file-item-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedFiles.splice(index, 1);
+                    updateFileList();
+                });
+            });
+
+            if (selectedFiles.length > 0) {
+                fileCount.textContent = `已选择 ${selectedFiles.length} 个文件`;
+                convertBtn.classList.add('show');
+                clearBtn.style.display = 'inline-block';
+            } else {
+                fileCount.textContent = '';
+                convertBtn.classList.remove('show');
+                clearBtn.style.display = 'none';
+            }
+        }
+
+        clearBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            updateFileList();
+            result.classList.remove('show');
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            convertBtn.disabled = true;
+            progress.classList.add('show');
+            result.classList.remove('show');
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('ncmFiles', file);
+            });
+
+            try {
+                progressFill.style.width = '50%';
+                progressText.textContent = '正在转换...';
+
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressFill.style.width = '100%';
+
+                const data = await response.json();
+
+                if (data.success) {
+                    convertedFiles = data.results;
+                    showResults(data);
+                } else {
+                    showResult('error', data.error || '转换失败');
+                }
+            } catch (error) {
+                showResult('error', '网络错误: ' + error.message);
+            } finally {
+                convertBtn.disabled = false;
+                setTimeout(() => {
+                    progress.classList.remove('show');
+                    progressFill.style.width = '0%';
+                }, 500);
+            }
+        });
+
+        function showResults(data) {
+            result.className = 'result show success';
+            resultTitle.textContent = `✅ 成功转换 ${data.results.length} 个文件，失败 ${data.errors.length} 个`;
+
+            resultList.innerHTML = '';
+
+            data.results.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'result-item success';
+                div.innerHTML = `
+                    <div class="result-item-icon">✓</div>
+                    <div class="result-item-info">
+                        <div class="result-item-name">${item.originalName} → ${item.filename}</div>
+                    </div>
+                    <a href="${item.downloadUrl}" class="download-btn" download>下载</a>
+                `;
+                resultList.appendChild(div);
+            });
+
+            data.errors.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'result-item error';
+                div.innerHTML = `
+                    <div class="result-item-icon">✗</div>
+                    <div class="result-item-info">
+                        <div class="result-item-name">${item.originalName}</div>
+                        <div class="result-item-error">${item.error}</div>
+                    </div>
+                `;
+                resultList.appendChild(div);
+            });
+
+            if (data.results.length >= 1) {
+                console.log('创建打包下载按钮，文件数量:', data.results.length);
+                resultActions.innerHTML = `
+                    <button class="download-all-btn show" id="downloadAllBtn" style="display: block !important;">打包下载全部 (${data.results.length} 个文件)</button>
+                `;
+                const downloadBtn = document.getElementById('downloadAllBtn');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', downloadAll);
+                    console.log('打包下载按钮已创建并绑定事件');
+                } else {
+                    console.error('无法找到打包下载按钮元素');
+                }
+            } else {
+                resultActions.innerHTML = '';
+            }
+
+            selectedFiles = [];
+            updateFileList();
+        }
+
+        async function downloadAll() {
+            const btn = document.getElementById('downloadAllBtn');
+            btn.disabled = true;
+            btn.textContent = '正在打包...';
+
+            try {
+                const filenames = convertedFiles.map(f => f.filename);
+                const response = await fetch('/download-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filenames })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'mp3_files.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('打包下载失败');
+                }
+            } catch (error) {
+                alert('下载错误: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = `打包下载全部 (${convertedFiles.length} 个文件)`;
+            }
+        }
+
+        function showResult(type, message) {
+            result.className = 'result show ' + type;
+            resultTitle.textContent = (type === 'success' ? '✅ ' : '❌ ') + message;
+            resultList.innerHTML = '';
+            resultActions.innerHTML = '';
+        }
+    </script>
+</body>
+</html>

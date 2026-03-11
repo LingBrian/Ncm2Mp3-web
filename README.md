@@ -63,12 +63,7 @@
 
 1. **拉取或构建镜像**
    
-   从 Docker Hub 拉取（如果已发布）：
-   ```bash
-   docker pull lingbrian/ncm2mp3-web
-   ```
-   
-   或在本地构建：
+   在本地构建：
    ```bash
    docker build -t ncm2mp3-web .
    ```

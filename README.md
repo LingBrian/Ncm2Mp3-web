@@ -5,6 +5,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/node.svg)](https://nodejs.org/)
 
+## 🌐 体验地址
+
+**在线体验：** [https://ncm.brl0.top/](https://ncm.brl0.top/)
+
+无需安装，直接在浏览器中使用 NCM 转 MP3 转换功能。
+
 ## ✨ 功能特性
 
 - 📁 **批量上传** - 支持一次选择多个 NCM 文件（最多 20 个）
@@ -18,6 +24,9 @@
 - 🔄 **一键重置** - 转换完成后可快速重置界面
 
 ## 📸 截图
+
+### 主界面
+![主界面](index.png)
 
 ### 上传界面
 上传 NCM 文件，支持多选和拖拽

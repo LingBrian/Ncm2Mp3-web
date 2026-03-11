@@ -57,6 +57,60 @@
    
    打开浏览器访问 [http://localhost:3000](http://localhost:3000)
 
+## 🐳 Docker 部署
+
+### 使用 Docker 运行
+
+1. **拉取或构建镜像**
+   
+   从 Docker Hub 拉取（如果已发布）：
+   ```bash
+   docker pull lingbrian/ncm2mp3-web
+   ```
+   
+   或在本地构建：
+   ```bash
+   docker build -t ncm2mp3-web .
+   ```
+
+2. **运行容器**
+   ```bash
+   docker run -d -p 3000:3000 --name ncm2mp3 ncm2mp3-web
+   ```
+
+3. **访问应用**
+   
+   打开浏览器访问 [http://localhost:3000](http://localhost:3000)
+
+### Docker Compose 部署
+
+创建 `docker-compose.yml` 文件：
+
+```yaml
+version: '3.8'
+
+services:
+  ncm2mp3:
+    image: ncm2mp3-web
+    build: .
+    ports:
+      - "3000:3000"
+    container_name: ncm2mp3
+    restart: unless-stopped
+```
+
+然后运行：
+```bash
+docker-compose up -d
+```
+
+### 常用 Docker 命令
+
+- **停止容器**：`docker stop ncm2mp3`
+- **启动容器**：`docker start ncm2mp3`
+- **查看日志**：`docker logs ncm2mp3`
+- **删除容器**：`docker rm -f ncm2mp3`
+
 ## 📖 使用说明
 
 ### 基本使用
@@ -95,9 +149,11 @@ Ncm2Mp3-web/
 ├── public/
 │   └── index.html          # 前端页面
 ├── uploads/                # 上传文件临时目录
-├── output/                # 转换后文件输出目录
-├── server.js              # 后端服务器
-├── package.json          # 项目配置
+├── output/                 # 转换后文件输出目录
+├── server.js               # 后端服务器
+├── package.json            # 项目配置
+├── Dockerfile              # Docker 构建文件
+└── .dockerignore           # Docker 忽略文件
 ├── .gitignore           # Git 忽略文件
 ├── LICENSE              # MIT 许可证
 └── README.md            # 项目文档

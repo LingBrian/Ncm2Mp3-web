@@ -175,26 +175,38 @@ app.get('/preview/:filename', (req, res) => {
   const fileSize = stat.size;
   const range = req.headers.range;
 
-  if (range) {
-    const [start, end] = range.replace(/bytes=/, '').split('-').map((v, i) => 
-      i === 0 ? parseInt(v, 10) : (v ? parseInt(v, 10) : fileSize - 1)
-    );
-    const chunksize = end - start + 1;
-    
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunksize,
-      'Content-Type': 'audio/mpeg'
-    });
-    fs.createReadStream(filePath, { start, end }).pipe(res);
-  } else {
-    res.writeHead(200, {
-      'Content-Length': fileSize,
-      'Content-Type': 'audio/mpeg'
-    });
-    fs.createReadStream(filePath).pipe(res);
-  }
+  const stream = fs.createReadStream(filePath, range ? {
+    start: parseInt(range.replace(/bytes=/, '').split('-')[0], 10),
+    end: range.split('-')[1] ? parseInt(range.split('-')[1], 10) : fileSize - 1
+  } : {});
+
+  stream.on('open', () => {
+    if (range) {
+      const [start, end] = range.replace(/bytes=/, '').split('-').map((v, i) => 
+        i === 0 ? parseInt(v, 10) : (v ? parseInt(v, 10) : fileSize - 1)
+      );
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': end - start + 1,
+        'Content-Type': 'audio/mpeg'
+      });
+    } else {
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type': 'audio/mpeg'
+      });
+    }
+  });
+
+  stream.on('error', (err) => {
+    console.error('音频流错误:', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: '音频流错误' });
+    }
+  });
+
+  stream.pipe(res);
 });
 
 app.listen(PORT, () => {

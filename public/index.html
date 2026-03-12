@@ -257,10 +257,11 @@
         .result-item {
             display: flex;
             align-items: center;
-            padding: 10px;
+            padding: 15px;
             background: rgba(255, 255, 255, 0.5);
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            min-height: 80px;
         }
 
         .result-item.success {
@@ -288,6 +289,29 @@
         .result-item-error {
             font-size: 12px;
             color: #dc3545;
+        }
+
+        .album-cover {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            margin-right: 15px;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .album-cover-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            margin-right: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .download-btn {
@@ -342,6 +366,58 @@
 
         .reset-btn:hover {
             background: #138496;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .preview-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 12px;
+            transition: background 0.3s ease;
+            margin-right: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .preview-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .preview-btn.playing {
+            background: #dc3545;
+        }
+
+        .preview-btn.playing:hover {
+            background: #c82333;
+        }
+
+        .audio-preview-container {
+            margin-top: 0;
+            margin-bottom: 8px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+            border-left: 4px solid #667eea;
+            margin-left: 0;
+        }
+
+        .audio-preview-container.show {
+            display: block;
+        }
+
+        .audio-preview-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -540,6 +616,9 @@
             }
         });
 
+        let currentAudio = null;
+        let currentPreviewBtn = null;
+
         function showResults(data) {
             result.className = 'result show success';
             resultTitle.textContent = `✅ 成功转换 ${data.results.length} 个文件，失败 ${data.errors.length} 个`;
@@ -547,16 +626,106 @@
             resultList.innerHTML = '';
 
             data.results.forEach(item => {
+                console.log('处理结果项:', item.originalName, '专辑图片:', item.albumCover ? '有' : '无');
                 const div = document.createElement('div');
                 div.className = 'result-item success';
+                
+                // 专辑图片
+                let albumCoverHtml;
+                if (item.albumCover) {
+                    albumCoverHtml = `<img src="${item.albumCover}" class="album-cover" alt="专辑封面">`;
+                } else {
+                    albumCoverHtml = `<div class="album-cover-placeholder">🎵</div>`;
+                }
+                
                 div.innerHTML = `
+                    ${albumCoverHtml}
                     <div class="result-item-icon">✓</div>
                     <div class="result-item-info">
                         <div class="result-item-name">${item.originalName} → ${item.filename}</div>
                     </div>
+                    <button class="preview-btn" data-filename="${item.filename}" data-original="${item.originalName}">▶ 预览</button>
                     <a href="${item.downloadUrl}" class="download-btn" download>下载</a>
                 `;
                 resultList.appendChild(div);
+
+                // 创建音频播放器容器（放在 result-item 下方）
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'audio-preview-container';
+                previewDiv.id = `preview-${item.filename}`;
+                previewDiv.innerHTML = `
+                    <div class="audio-preview-title">正在播放: ${item.originalName}</div>
+                    <audio class="audio-player" controls preload="metadata">
+                        <source src="/preview/${item.filename}" type="audio/mpeg">
+                        您的浏览器不支持音频播放
+                    </audio>
+                `;
+                resultList.appendChild(previewDiv);
+            });
+
+            // 绑定预览按钮事件
+            document.querySelectorAll('.preview-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const filename = e.target.dataset.filename;
+                    const originalName = e.target.dataset.original;
+                    const previewContainer = document.getElementById(`preview-${filename}`);
+                    const audio = previewContainer.querySelector('audio');
+
+                    // 如果点击的是当前正在播放的按钮
+                    if (currentPreviewBtn === e.target) {
+                        if (audio.paused) {
+                            audio.play();
+                            e.target.textContent = '⏸ 暂停';
+                            e.target.classList.add('playing');
+                        } else {
+                            audio.pause();
+                            e.target.textContent = '▶ 预览';
+                            e.target.classList.remove('playing');
+                        }
+                        return;
+                    }
+
+                    // 停止之前播放的音频
+                    if (currentAudio) {
+                        currentAudio.pause();
+                        currentAudio.currentTime = 0;
+                        if (currentPreviewBtn) {
+                            currentPreviewBtn.textContent = '▶ 预览';
+                            currentPreviewBtn.classList.remove('playing');
+                        }
+                        document.querySelectorAll('.audio-preview-container').forEach(container => {
+                            container.classList.remove('show');
+                        });
+                    }
+
+                    // 播放新的音频
+                    previewContainer.classList.add('show');
+                    audio.play();
+                    e.target.textContent = '⏸ 暂停';
+                    e.target.classList.add('playing');
+                    currentAudio = audio;
+                    currentPreviewBtn = e.target;
+
+                    // 音频播放结束事件
+                    audio.addEventListener('ended', () => {
+                        e.target.textContent = '▶ 预览';
+                        e.target.classList.remove('playing');
+                    });
+
+                    // 音频暂停事件（用户手动点击暂停）
+                    audio.addEventListener('pause', () => {
+                        if (audio.currentTime !== audio.duration) {
+                            e.target.textContent = '▶ 预览';
+                            e.target.classList.remove('playing');
+                        }
+                    });
+
+                    // 音频播放事件
+                    audio.addEventListener('play', () => {
+                        e.target.textContent = '⏸ 暂停';
+                        e.target.classList.add('playing');
+                    });
+                });
             });
 
             data.errors.forEach(item => {
@@ -630,6 +799,14 @@
         }
 
         function resetAll() {
+            // 停止当前播放的音频
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+            currentPreviewBtn = null;
+
             result.classList.remove('show');
             resultReset.style.display = 'none';
             convertedFiles = [];

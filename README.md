@@ -205,7 +205,7 @@ node server.js
 
 ## 📮 联系方式
 
-- GitHub: [@LingBrian](https://github.com/LingBrian)
+- 邮箱: brianling@qq.com
 
 ---
 
